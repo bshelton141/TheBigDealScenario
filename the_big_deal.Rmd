@@ -75,5 +75,5 @@ sum(output[output$Result == "Winner", ]$Instances) / sum(output$Instances)
 
 
 ## Results
-You are **twice as likely** to win *The Big Deal* if you drop your original door selection and choose the door that the host chose NOT open!
+You are **twice as likely** to win *The Big Deal* if you drop your original door selection and choose the door that the host chose NOT to open!
 
