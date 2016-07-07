@@ -1,0 +1,79 @@
+---
+title: "Let's Make a Deal: *The Big Deal* Simulation"
+author: "Brandon Shelton"
+date: "July 7, 2016"
+output: html_document
+---
+
+## Question
+
+When playing *The Big Deal*, should a player hold on to the door that they originally selected, or should they drop it and choose the door that the host chose NOT to open?
+
+
+## Background
+
+Let's Make a Deal is an American gameshow that has graced television airwaves for over 50 years. The show consists of lucky audience contestants trying their hand at various games of chance, with the biggest game - appropriately titled "The Big Deal" coming at the end of each show.
+
+The format of *The Big Deal* game has changed over the years, but there has been debate over the game strategy of a particular format. In this scenario, a player is presented with three doors. Behind one of the doors is a prize (e.g., car), and the other two doors hide nothing (i.e., they are empty). 
+
+The player chooses 1 of the 3 doors, but the door is not yet opened. The host then opens the unchosen door that contains nothing behind it. Now the player must again choose to open the door that he/she originally selected, or to swith and open the door option that the host decided not to open.
+
+At first, it seems like the player has a 50/50 chance of selecting the *Winner* door once the host removes the 3rd door from contention. However, statistics tells us that the player actually has a 66% of chance of winning the prize if he/she gives up their first choice and selects the door that the host decided not to open.
+
+## Simulation
+
+The R code below simulates a scenario where *The Big Deal* has been played in the abovementioned manner for 54 years (since 1963) at a rate of 100 games per year and, in every game, the players decide to switch from their original selection and open the door that the host chose not to open.
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+the_big_deal <- function(x) {
+  z <- 100
+  #randomly places the "winning" door for z number of simulations
+  door_options <- lapply(1:z, function(i) {
+    data.frame(sample(c("Winner", "Loser", "Loser"), 3, replace = FALSE))
+  })
+  
+  #the contestant always chooses door 1, leaving the other 2 for Monty to choose from
+  montys_options <- lapply(1:z, function(i) {
+    data.frame(door_options[[i]][2:3, ])
+  })
+  
+  #Monty always has to open an "Loser" door, leaving either another "Loser" door or the "Winner"
+  remaining_option <- lapply(1:z, function(i) {
+    if(montys_options[[i]][1, ] == "Loser") {
+      data.frame(montys_options[[i]][2, ])
+    } else {
+      data.frame(montys_options[[i]][1, ])
+    }
+  })
+  remaining_option <- data.frame(remaining_option)
+  
+  #the % of simulations where the "Winner" door is left as the alternative to the door that Monty opened
+  results <- melt(table(unlist(remaining_option)))
+}
+
+
+y <- c(1:54)
+output <- do.call("rbind", lapply(y, function(x) the_big_deal(x)))
+
+colnames(output) <- c("Result", "Instances")
+output$Year <- rep(1963:2016, each = 2)
+
+ggplot(output, aes(x = Year, y = Instances, color = Result)) + 
+  geom_point(size = 3) +
+  labs(title = "Selecting the Door that the Host Chose NOT to Open")
+
+```
+
+Although there is some variation from year-to-year, it is clear that the player has a better chance of walking away as a winner if they implemented this strategy. In fact, aggregating all 54 years worth of simulated data together (5,400 games) proves that the winning door is chosen ~66% of the time.
+
+```{r}
+sum(output[output$Result == "Winner", ]$Instances) / sum(output$Instances)
+```
+
+
+## Results
+You are **twice as likely** to win *The Big Deal* if you drop your original door selection and choose the door that the host chose NOT open!
+
